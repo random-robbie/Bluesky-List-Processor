@@ -24,10 +24,9 @@ This script processes Bluesky lists or feeds and allows you to perform bulk **bl
 
    ```bash
    git clone https://github.com/random-robbie/Bluesky-List-Processor.git
-   cd bluesky-list-processor
-```
+   cd bluesky-list-processor```
 
-2. Run
+2. Run:
 
 ```
 usage: bsky-blocker.py [-h] --action {block,mute} [--dry-run] [--output OUTPUT] [--limit LIMIT] list_url
@@ -46,7 +45,7 @@ options:
   --limit LIMIT         Number of posts to fetch from feed (default: 100)
 ```
 
-3 . In action
+3. In action:
 
 ```
 python3 bsky-blocker.py https://bsky.app/profile/did:plc:jdkvwye2lf4mingzk7qdebzc/feed/furry-new --dry-run --action block
