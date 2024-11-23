@@ -23,7 +23,7 @@ This script processes Bluesky lists or feeds and allows you to perform bulk **bl
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/random-robbie/bluesky-blocklist.git
+   git clone https://github.com/random-robbie/Bluesky-List-Processor.git
    cd bluesky-list-processor
 ```
 
