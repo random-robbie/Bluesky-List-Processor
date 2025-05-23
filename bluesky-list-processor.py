@@ -43,9 +43,9 @@ def convert_url_to_at_uri(url):
     
     return identifier, list_name, record_type
 
-async def resolve_handle_to_did(client, handle):
-    """Convert a Bluesky handle to a DID"""
-    response = client.com.atproto.identity.resolveHandle({'handle': handle})
+def resolve_handle_to_did(client, handle):
+    """Convert a Bluesky handle to a DID - MADE SYNCHRONOUS"""
+    response = client.com.atproto.identity.resolve_handle({'handle': handle})
     return response.did
 
 def parse_arguments():
@@ -80,8 +80,8 @@ def parse_arguments():
     )
     return parser.parse_args()
 
-async def get_feed_users(client, uri, limit=100):
-    """Get unique users from a feed"""
+def get_feed_users(client, uri, limit=100):
+    """Get unique users from a feed - MADE SYNCHRONOUS"""
     try:
         # Get the feed posts using the correct method name
         params = models.app.bsky.feed.get_feed.Params(
@@ -120,8 +120,10 @@ async def process_list(username, password, list_input, action, dry_run, output_f
         if isinstance(result, tuple):
             # Need to resolve handle to DID
             handle, list_name, record_type = result
-            did = resolve_handle_to_did(client, handle)
+            print(f"Resolving handle: {handle}")
+            did = resolve_handle_to_did(client, handle)  # Now synchronous
             list_uri = f"at://{did}/{record_type}/{list_name}"
+            print(f"Resolved DID: {did}")
         else:
             list_uri = result
         
@@ -130,10 +132,10 @@ async def process_list(username, password, list_input, action, dry_run, output_f
         # Get the list or feed content
         if 'feed.generator' in list_uri:
             print(f"Processing feed (fetching up to {limit} posts)...")
-            users = await get_feed_users(client, list_uri, limit)
+            users = get_feed_users(client, list_uri, limit)  # Now synchronous
         else:
             print("Processing list...")
-            list_view = client.app.bsky.graph.list({'list': list_uri})
+            list_view = client.app.bsky.graph.get_list({'list': list_uri})
             users = [{'did': item.subject.did, 'handle': item.subject.handle} 
                     for item in list_view.items]
         
@@ -156,20 +158,21 @@ async def process_list(username, password, list_input, action, dry_run, output_f
         for user in users:
             try:
                 if action == 'block':
-                    record_data = {
-                        "$type": "app.bsky.graph.block",  # The type of the record
-                        "subject": user['did'],          # The DID of the user to block
-                        "createdAt": datetime.utcnow().isoformat() + "Z",  # Current timestamp
-                    }
-                    client.app.bsky.graph.block.create(repo=username, record=record_data)
+                    # Use the proper blocking method
+                    client.app.bsky.graph.block.create(
+                        repo=client.me.did,  # Use authenticated user's DID
+                        record={
+                            "$type": "app.bsky.graph.block",
+                            "subject": user['did'],
+                            "createdAt": datetime.utcnow().isoformat() + "Z"
+                        }
+                    )
                     print(f"Blocked {user['handle']}")
                 else:
-                    record_data = {
-                        "$type": "app.bsky.graph.mute",  # The type of the record
-                        "subject": user['did'],          # The DID of the user to block
-                        "createdAt": datetime.utcnow().isoformat() + "Z",  # Current timestamp
-                    }
-                    client.app.bsky.graph.mute.create(repo=username, record=record_data)
+                    # Use the proper muting method
+                    client.app.bsky.actor.mute_actor({
+                        'actor': user['did']
+                    })
                     print(f"Muted {user['handle']}")
                 
                 processed += 1
